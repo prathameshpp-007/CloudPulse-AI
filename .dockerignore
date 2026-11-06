@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+
+# Python virtual environment
+app/venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Documentation not needed inside the application image
+docs/

@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpulse-api
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: cloudpulse-api
+
+  template:
+    metadata:
+      labels:
+        app: cloudpulse-api
+
+    spec:
+      containers:
+        - name: cloudpulse-api
+          image: cloudpulse-ai:1.3
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8000
+
+          env:
+            - name: DB_HOST
+              value: "cloudpulse-db"
+
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: cloudpulse-db-secret
+                  key: POSTGRES_DB
+
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudpulse-db-secret
+                  key: POSTGRES_USER
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloudpulse-db-secret
+                  key: POSTGRES_PASSWORD
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
