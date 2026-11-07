@@ -9,11 +9,14 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
   build-test-and-push:
+    # Don't rebuild when the workflow itself updates only the Helm image tag
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
     runs-on: ubuntu-latest
 
     steps:
@@ -43,6 +46,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
+        if: github.event_name == 'push'
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push multi-platform Docker image
@@ -55,3 +59,22 @@ jobs:
           tags: |
             ghcr.io/prathameshpp-007/cloudpulse-ai:latest
             ghcr.io/prathameshpp-007/cloudpulse-ai:${{ github.sha }}
+
+      - name: Update Helm image tag
+        if: github.event_name == 'push'
+        run: |
+          sed -i "s|tag: \".*\"|tag: \"${{ github.sha }}\"|" helm/cloudpulse-ai/values.yaml
+
+      - name: Commit and push Helm image tag
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add helm/cloudpulse-ai/values.yaml
+
+          if git diff --cached --quiet; then
+            echo "No Helm changes to commit"
+          else
+            git commit -m "chore: update CloudPulse AI image tag [skip ci]"
+            git push
+          fi
