@@ -1,0 +1,30 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/prathameshpp-007/cloudpulse-ai
+  pullPolicy: Always
+  tag: "1148d7d8c0a42e2788267d0d7fa67894faf6eaaa"
+
+service:
+  type: NodePort
+  port: 8000
+  targetPort: 8000
+  nodePort: 30082
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
+
+database:
+  host: cloudpulse-db
+  secretName: cloudpulse-db-secret
