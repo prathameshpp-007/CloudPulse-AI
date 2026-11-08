@@ -24,7 +24,11 @@ function showPage(page) {
         item.classList.remove("active-page");
     });
 
-    document.getElementById(`${page}-page`).classList.add("active-page");
+    const selectedPage = document.getElementById(`${page}-page`);
+
+    if (selectedPage) {
+        selectedPage.classList.add("active-page");
+    }
 
     const pageInfo = {
         dashboard: [
@@ -45,22 +49,40 @@ function showPage(page) {
         ]
     };
 
-    document.getElementById("page-title").textContent = pageInfo[page][0];
-    document.getElementById("page-subtitle").textContent = pageInfo[page][1];
+    if (pageInfo[page]) {
+        document.getElementById("page-title").textContent = pageInfo[page][0];
+        document.getElementById("page-subtitle").textContent = pageInfo[page][1];
+    }
 }
 
 async function loadDashboard() {
     try {
+        // Check API health
         const healthResponse = await fetch(`${API_URL}/health`);
+
+        if (!healthResponse.ok) {
+            throw new Error("API health check failed");
+        }
+
         const health = await healthResponse.json();
 
         document.getElementById("system-status").textContent =
             health.status === "healthy" ? "Healthy" : "Issue";
 
         document.getElementById("api-status").textContent = "Online";
-        document.getElementById("service-api").textContent = "Online";
 
+        const serviceApi = document.getElementById("service-api");
+        if (serviceApi) {
+            serviceApi.textContent = "Online";
+        }
+
+        // Load metrics
         const metricsResponse = await fetch(`${API_URL}/metrics`);
+
+        if (!metricsResponse.ok) {
+            throw new Error("Could not load metrics");
+        }
+
         const metricsData = await metricsResponse.json();
 
         currentMetrics = metricsData.metrics || [];
@@ -71,7 +93,13 @@ async function loadDashboard() {
         displayMetrics(currentMetrics, "metrics-list", 8);
         displayMetrics(currentMetrics, "all-metrics-list");
 
+        // Load AI analysis and alerts
         const analysisResponse = await fetch(`${API_URL}/analyze`);
+
+        if (!analysisResponse.ok) {
+            throw new Error("Could not load AI analysis");
+        }
+
         const analysisData = await analysisResponse.json();
 
         currentAlerts = analysisData.alerts || [];
@@ -82,12 +110,18 @@ async function loadDashboard() {
         displayAlerts(currentAlerts, "alerts-list");
         displayAlerts(currentAlerts, "all-alerts-list");
 
+        console.log("CloudPulse dashboard loaded successfully");
+
     } catch (error) {
         console.error("CloudPulse API Error:", error);
 
         document.getElementById("system-status").textContent = "Offline";
         document.getElementById("api-status").textContent = "Disconnected";
-        document.getElementById("service-api").textContent = "Offline";
+
+        const serviceApi = document.getElementById("service-api");
+        if (serviceApi) {
+            serviceApi.textContent = "Offline";
+        }
     }
 }
 
@@ -96,7 +130,9 @@ function displayMetrics(metrics, containerId, limit = null) {
 
     if (!container) return;
 
-    const visibleMetrics = limit ? metrics.slice(0, limit) : metrics;
+    const visibleMetrics = limit
+        ? metrics.slice(0, limit)
+        : metrics;
 
     if (visibleMetrics.length === 0) {
         container.innerHTML = "<p>No metrics collected yet.</p>";
@@ -109,7 +145,9 @@ function displayMetrics(metrics, containerId, limit = null) {
                 <strong>${metric.service_name}</strong>
                 <span>${metric.metric_name}</span>
             </div>
-            <div class="metric-value">${metric.metric_value}</div>
+            <div class="metric-value">
+                ${metric.metric_value}
+            </div>
         </div>
     `).join("");
 }
@@ -139,83 +177,5 @@ function displayAlerts(alerts, containerId) {
     `).join("");
 }
 
-loadDashboard();const API_URL = "http://localhost:8081";
-
-async function loadDashboard() {
-    try {
-        const healthResponse = await fetch(`${API_URL}/health`);
-        const health = await healthResponse.json();
-
-        document.getElementById("system-status").textContent =
-            health.status === "healthy" ? "Healthy" : "Issue";
-
-        document.getElementById("api-status").textContent = "Online";
-
-        const metricsResponse = await fetch(`${API_URL}/metrics`);
-        const metricsData = await metricsResponse.json();
-
-        document.getElementById("metric-count").textContent =
-            metricsData.count || 0;
-
-        displayMetrics(metricsData.metrics || []);
-
-        const analysisResponse = await fetch(`${API_URL}/analyze`);
-        const analysisData = await analysisResponse.json();
-
-        document.getElementById("alert-count").textContent =
-            analysisData.alerts_found || 0;
-
-        displayAlerts(analysisData.alerts || []);
-
-    } catch (error) {
-        console.error(error);
-
-        document.getElementById("system-status").textContent = "Offline";
-        document.getElementById("api-status").textContent = "Disconnected";
-    }
-}
-
-function displayMetrics(metrics) {
-    const container = document.getElementById("metrics-list");
-
-    if (metrics.length === 0) {
-        container.innerHTML = "<p>No metrics collected yet.</p>";
-        return;
-    }
-
-    container.innerHTML = metrics.slice(0, 8).map(metric => `
-        <div class="metric-item">
-            <div class="metric-name">
-                ${metric.service_name} · ${metric.metric_name}
-            </div>
-            <div class="metric-value">
-                ${metric.metric_value}
-            </div>
-        </div>
-    `).join("");
-}
-
-function displayAlerts(alerts) {
-    const container = document.getElementById("alerts-list");
-
-    if (alerts.length === 0) {
-        container.innerHTML = `
-            <div class="alert-item">
-                <strong>✓ No active issues</strong>
-                <p>Cloud infrastructure is operating normally.</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = alerts.map(alert => `
-        <div class="alert-item">
-            <strong class="alert-${alert.severity}">
-                ${alert.severity.toUpperCase()}
-            </strong>
-            <p>${alert.recommendation}</p>
-        </div>
-    `).join("");
-}
-
+// Load CloudPulse data when the page opens
 loadDashboard();
