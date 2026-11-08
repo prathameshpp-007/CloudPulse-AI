@@ -1,11 +1,30 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import psycopg
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="CloudPulse AI")
+
+app = FastAPI(
+    title="CloudPulse AI",
+    description="Cloud infrastructure monitoring and performance analysis API",
+    version="1.0.0",
+)
+
+
+# Allow the CloudPulse frontend to communicate with this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Model for incoming metrics
@@ -15,8 +34,6 @@ class Metric(BaseModel):
     metric_value: float
 
 
-# PostgreSQL connection configuration
-# In Kubernetes, "cloudpulse-db" is the PostgreSQL Service name
 # PostgreSQL connection configuration
 DATABASE_CONFIG = {
     "host": os.getenv("DB_HOST", "cloudpulse-db"),
@@ -34,21 +51,26 @@ def get_connection():
 # Create the metrics table when the application starts
 @app.on_event("startup")
 def create_metrics_table():
-    connection = get_connection()
+    try:
+        connection = get_connection()
 
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS metrics (
-                id SERIAL PRIMARY KEY,
-                service_name VARCHAR(100) NOT NULL,
-                metric_name VARCHAR(100) NOT NULL,
-                metric_value DOUBLE PRECISION NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-        connection.commit()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS metrics (
+                    id SERIAL PRIMARY KEY,
+                    service_name VARCHAR(100) NOT NULL,
+                    metric_name VARCHAR(100) NOT NULL,
+                    metric_value DOUBLE PRECISION NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            connection.commit()
 
-    connection.close()
+        connection.close()
+        print("CloudPulse AI: Database connected successfully")
+
+    except Exception as error:
+        print(f"Database startup error: {error}")
 
 
 # Home endpoint
@@ -56,7 +78,8 @@ def create_metrics_table():
 def root():
     return {
         "message": "CloudPulse AI is running",
-        "status": "healthy"
+        "status": "healthy",
+        "version": "1.0.0",
     }
 
 
@@ -65,7 +88,7 @@ def root():
 def health():
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -73,26 +96,23 @@ def health():
 @app.post("/metrics")
 def create_metric(metric: Metric):
     try:
-        connection = get_connection()
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO metrics (service_name, metric_name, metric_value)
+                    VALUES (%s, %s, %s)
+                    RETURNING id, service_name, metric_name, metric_value, created_at;
+                    """,
+                    (
+                        metric.service_name,
+                        metric.metric_name,
+                        metric.metric_value,
+                    ),
+                )
 
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO metrics (service_name, metric_name, metric_value)
-                VALUES (%s, %s, %s)
-                RETURNING id, service_name, metric_name, metric_value, created_at;
-                """,
-                (
-                    metric.service_name,
-                    metric.metric_name,
-                    metric.metric_value,
-                ),
-            )
-
-            new_metric = cursor.fetchone()
-            connection.commit()
-
-        connection.close()
+                new_metric = cursor.fetchone()
+                connection.commit()
 
         return {
             "status": "success",
@@ -107,27 +127,21 @@ def create_metric(metric: Metric):
         }
 
     except Exception as error:
-        return {
-            "status": "error",
-            "message": str(error),
-        }
+        raise HTTPException(status_code=500, detail=str(error))
 
 
 # Get all stored metrics
 @app.get("/metrics")
 def get_metrics():
     try:
-        connection = get_connection()
-
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT id, service_name, metric_name, metric_value, created_at
-                FROM metrics
-                ORDER BY created_at DESC;
-            """)
-            metrics = cursor.fetchall()
-
-        connection.close()
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, service_name, metric_name, metric_value, created_at
+                    FROM metrics
+                    ORDER BY created_at DESC;
+                """)
+                metrics = cursor.fetchall()
 
         return {
             "status": "success",
@@ -145,34 +159,26 @@ def get_metrics():
         }
 
     except Exception as error:
-        return {
-            "status": "error",
-            "message": str(error),
-        }
+        raise HTTPException(status_code=500, detail=str(error))
 
 
 # Analyze metrics and detect potential problems
 @app.get("/analyze")
 def analyze_metrics():
     try:
-        connection = get_connection()
-
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT service_name, metric_name, metric_value, created_at
-                FROM metrics
-                ORDER BY created_at DESC;
-            """)
-            metrics = cursor.fetchall()
-
-        connection.close()
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT service_name, metric_name, metric_value, created_at
+                    FROM metrics
+                    ORDER BY created_at DESC;
+                """)
+                metrics = cursor.fetchall()
 
         alerts = []
 
         for metric in metrics:
-            service_name = metric[0]
-            metric_name = metric[1]
-            metric_value = metric[2]
+            service_name, metric_name, metric_value, created_at = metric
 
             if metric_name == "cpu_usage" and metric_value >= 90:
                 alerts.append({
@@ -209,21 +215,16 @@ def analyze_metrics():
         }
 
     except Exception as error:
-        return {
-            "status": "error",
-            "message": str(error),
-        }
-        
+        raise HTTPException(status_code=500, detail=str(error))
+
+
 # CPU-intensive endpoint for Kubernetes HPA testing
 @app.get("/load-test")
 def load_test():
-    result = 0
-
-    for i in range(10_000_000):
-        result += i * i
+    result = sum(i * i for i in range(10_000_000))
 
     return {
         "status": "success",
         "message": "CPU load test completed",
-        "result": result
+        "result": result,
     }
