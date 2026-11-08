@@ -70,10 +70,13 @@ jobs:
           echo "Updating Helm image tag to: ${IMAGE_TAG}"
 
           sed -i.bak \
-            "s|^[[:space:]]*tag: .*|tag: ${IMAGE_TAG}|" \
+            "s|^[[:space:]]*tag: .*|  tag: ${IMAGE_TAG}|" \
             helm/cloudpulse-ai/values.yaml
 
           rm -f helm/cloudpulse-ai/values.yaml.bak
+
+          echo "Updated values.yaml:"
+          grep -A 4 "^image:" helm/cloudpulse-ai/values.yaml
 
       - name: Commit and push Helm changes
         run: |
