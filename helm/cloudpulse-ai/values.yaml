@@ -3,7 +3,7 @@ replicaCount: 2
 image:
   repository: ghcr.io/prathameshpp-007/cloudpulse-ai
   pullPolicy: Always
-  tag: 34f8fd5918e7
+tag: c048436cbd2d
 
 service:
   type: NodePort
