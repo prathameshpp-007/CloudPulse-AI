@@ -1,20 +1,13 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 
 import psycopg
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+app = FastAPI(title="CloudPulse AI")
 
-app = FastAPI(
-    title="CloudPulse AI",
-    description="Cloud infrastructure monitoring and performance analysis API",
-    version="1.0.0",
-)
-
-
-# Allow the CloudPulse frontend to communicate with this API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
