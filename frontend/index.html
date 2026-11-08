@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudPulse AI | Cloud Monitoring</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <span>☁️</span> CloudPulse
+        </div>
+
+        <nav>
+            <a href="#" class="nav-link active" data-page="dashboard">📊 Dashboard</a>
+            <a href="#" class="nav-link" data-page="metrics">📈 Metrics</a>
+            <a href="#" class="nav-link" data-page="alerts">🚨 Alerts</a>
+            <a href="#" class="nav-link" data-page="services">🖥️ Services</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="status-dot"></span>
+            System Operational
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header>
+            <div>
+                <p class="eyebrow">CLOUD INFRASTRUCTURE MONITORING</p>
+                <h1 id="page-title">System Overview</h1>
+                <p class="subtitle" id="page-subtitle">
+                    Real-time infrastructure health and performance.
+                </p>
+            </div>
+
+            <button onclick="loadDashboard()">↻ Refresh</button>
+        </header>
+
+        <!-- DASHBOARD PAGE -->
+        <div class="page active-page" id="dashboard-page">
+
+            <section class="status-banner">
+                <span class="pulse"></span>
+                <div>
+                    <strong>All systems operational</strong>
+                    <p>CloudPulse AI is actively monitoring your infrastructure.</p>
+                </div>
+            </section>
+
+            <section class="cards">
+                <div class="card">
+                    <p>System Status</p>
+                    <h2 id="system-status">Checking...</h2>
+                </div>
+
+                <div class="card">
+                    <p>Total Metrics</p>
+                    <h2 id="metric-count">0</h2>
+                </div>
+
+                <div class="card">
+                    <p>Active Alerts</p>
+                    <h2 id="alert-count">0</h2>
+                </div>
+
+                <div class="card">
+                    <p>API Status</p>
+                    <h2 id="api-status">Connecting...</h2>
+                </div>
+            </section>
+
+            <section class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Recent Metrics</h2>
+                            <p>Latest infrastructure measurements</p>
+                        </div>
+                    </div>
+                    <div id="metrics-list" class="metrics-list">Loading metrics...</div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>AI Insights</h2>
+                            <p>Performance recommendations</p>
+                        </div>
+                    </div>
+                    <div id="alerts-list" class="alerts-list">Analyzing infrastructure...</div>
+                </div>
+            </section>
+        </div>
+
+        <!-- METRICS PAGE -->
+        <div class="page" id="metrics-page">
+            <section class="panel full-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Infrastructure Metrics</h2>
+                        <p>All collected performance measurements</p>
+                    </div>
+                </div>
+                <div id="all-metrics-list" class="metrics-list"><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudPulse AI | Cloud Monitoring</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <span>☁️</span> CloudPulse
+        </div>
+
+        <nav>
+            <a href="#" class="active">📊 Dashboard</a>
+            <a href="#metrics">📈 Metrics</a>
+            <a href="#alerts">🚨 Alerts</a>
+            <a href="#services">🖥️ Services</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="status-dot"></span>
+            System Operational
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header>
+            <div>
+                <p class="eyebrow">CLOUD INFRASTRUCTURE MONITORING</p>
+                <h1>System Overview</h1>
+                <p class="subtitle">Real-time infrastructure health and performance.</p>
+            </div>
+
+            <button onclick="loadDashboard()">↻ Refresh</button>
+        </header>
+
+        <section class="status-banner">
+            <span class="pulse"></span>
+            <div>
+                <strong>All systems operational</strong>
+                <p>CloudPulse AI is actively monitoring your infrastructure.</p>
+            </div>
+        </section>
+
+        <section class="cards">
+            <div class="card">
+                <p>System Status</p>
+                <h2 id="system-status">Checking...</h2>
+            </div>
+
+            <div class="card">
+                <p>Total Metrics</p>
+                <h2 id="metric-count">0</h2>
+            </div>
+
+            <div class="card">
+                <p>Active Alerts</p>
+                <h2 id="alert-count">0</h2>
+            </div>
+
+            <div class="card">
+                <p>API Status</p>
+                <h2 id="api-status">Connecting...</h2>
+            </div>
+        </section>
+
+        <section class="dashboard-grid">
+
+            <div class="panel" id="metrics">
+                <div class="panel-header">
+                    <div>
+                        <h2>Recent Metrics</h2>
+                        <p>Latest infrastructure measurements</p>
+                    </div>
+                </div>
+
+                <div id="metrics-list" class="metrics-list">
+                    Loading metrics...
+                </div>
+            </div>
+
+            <div class="panel" id="alerts">
+                <div class="panel-header">
+                    <div>
+                        <h2>AI Insights</h2>
+                        <p>Performance recommendations</p>
+                    </div>
+                </div>
+
+                <div id="alerts-list" class="alerts-list">
+                    Analyzing infrastructure...
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
